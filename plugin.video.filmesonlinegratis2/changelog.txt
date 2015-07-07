@@ -1,4 +1,2 @@
-<13/03/2014>
-* legendas para os streams do gdrive
-* suporte ao picasa
-* suporte ao vk.com
+<07/07/2015>
+* Fix seriados
