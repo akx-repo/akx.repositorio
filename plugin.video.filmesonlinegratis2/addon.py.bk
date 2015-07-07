@@ -1,0 +1,415 @@
+#!/usr/bin/env python
+# -*- coding: UTF-8 -*-
+# Copyright 2013 A minha casa digital 
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+#hgarcia/eseffair 13/03/2014
+#gutoakashi1   25/05/15
+
+
+##############BIBLIOTECAS A IMPORTAR E DEFINICOES####################
+
+import urllib,urllib2,re,xbmcplugin,xbmcgui,xbmc,xbmcaddon,HTMLParser,xmltosrt
+import urlresolver
+import jsunpack
+from bs4 import BeautifulSoup
+try:
+    import json
+except:
+    import simplejson as json
+	
+h = HTMLParser.HTMLParser()
+
+
+versao = '0.1.0'
+addon_id = 'plugin.video.cinefilmes'
+selfAddon = xbmcaddon.Addon(id=addon_id)
+addonfolder = selfAddon.getAddonInfo('path')
+artfolder = addonfolder + '/resources/img/'
+fanart = addonfolder + '/fanart.jpg'
+
+
+################################################## 
+
+#MENUS############################################
+
+
+def CATEGORIES():
+	dialog = xbmcgui.Dialog()
+	dialog.ok("Atualizado", "Addon atualizado por gutoakashi1. email: akx.kodi@bol.com.br")
+	dialog = xbmcgui.Dialog()
+	dialog.ok("Doações", "Faça sua doação para manter o addon sempre atualizado. Mande um email para akx.kodi@bol.com.br para mais informações")
+	addDir('CATEGORIAS','-',1,artfolder + 'categorias.png')
+	addDir('LANCAMENTOS','http://www.cinefilmeshd.com/category/lancamento/',2,artfolder + 'categorias.png')
+	addDir('BLURAY','http://www.cinefilmeshd.com/category/bluray/',2,artfolder + 'destaques.png')
+	addDir('SERIADOS','http://www.cinefilmeshd.com/category/seriados/',2,artfolder + 'destaques.png')
+	addDir('Pesquisar','-',3,artfolder + 'pesquisar.png')
+	
+	#addLink("",'',artfolder + '-')  # Esta linha cria um espaço em branco
+	
+
+###################################################################################
+#FUNCOES
+def categorias():
+	#alterar os icons, pois estão mal. Por exemplo, para ACAO o icon é: artfolder + 'acao.png'
+	addDir('FULL HD 1080P','http://www.cinefilmeshd.com/category/1080p/',2,artfolder + '1080P.jpg')
+	addDir('ACAO','http://www.cinefilmeshd.com/category/acao/',2,artfolder + 'acao.jpg')
+	addDir('ANIMACAO','http://www.cinefilmeshd.com/category/animacao/',2,artfolder + 'animacao.jpg')
+	addDir('AVENTURA','http://www.cinefilmeshd.com/category/aventura/',2,artfolder + 'AVENTURA.jpg')
+	addDir('COMEDIA','http://www.cinefilmeshd.com/category/comedia/',2,artfolder + 'COMEDIA.jpg')
+	addDir('COMEDIA ROMANTICA','http://www.cinefilmeshd.com/category/comedia-romantica/',2,artfolder + 'comediaro.jpg')
+	addDir('DOCUMENTARIOS','http://www.cinefilmeshd.com/category/documentario/',2,artfolder + 'doc.jpg')
+	addDir('DRAMA','http://www.cinefilmeshd.com/category/drama/',2,artfolder + 'DRAMA.jpg')
+	addDir('FICCAO CIENTIFICA','http://www.cinefilmeshd.com/category/ficcao-cientifica/',2,artfolder + 'ficcao.jpg')
+	addDir('GUERRA','http://www.cinefilmeshd.com/category/guerra/',2,artfolder + 'GUERRA.jpg')
+	addDir('INGLES','http://www.cinefilmeshd.com/category/ingles/',2,artfolder + 'INGLES.jpg')
+	addDir('LEGENDADO','http://www.cinefilmeshd.com/category/legendados/',2,artfolder + 'LEGENDADOS.jpg')
+	addDir('MUSICAL','http://www.cinefilmeshd.com/category/musical/',2,artfolder + 'MUSICAL.jpg')
+	addDir('NACIONAL','http://www.cinefilmeshd.com/category/nacional/',2,artfolder + 'NACIONAL.jpg')
+	addDir('ROMANCE','http://www.cinefilmeshd.com/category/romance/',2,artfolder + 'ROMANCE.jpg')
+	addDir('SUSPENSE','http://www.cinefilmeshd.com/category/suspense/',2,artfolder + 'SUSPENSE.jpg')
+	addDir('TERROR','http://www.cinefilmeshd.com/category/terror/',2,artfolder + 'TERROR.jpg')
+	
+	
+	
+def listar_videos(url):
+	codigo_fonte = abrir_url(url).result
+	match = re.compile('<h2><a href="(.+?)" title="(.+?)">.+?</a></h2>').findall(codigo_fonte) 
+	img = re.compile('<img src="(.+?)" alt=".+?" />').findall(codigo_fonte) #<div style="text-align: center;"><img alt="" border="0" src="(.+?)"
+
+	a = [] # url titulo img
+	for x in range(0, len(match)):
+		temp = [match[x][0],match[x][1],img[x]]; 
+		a.append(temp);
+	
+	total = len(a)
+	for url2, titulo, img in a:
+		titulo = titulo.replace('&#8211;',"-").replace('&#8217;',"'")	#Linha para corrigir caracteres especiais
+		addDir(titulo,url2,4,img,False,total) # Linha que eu adicionei
+		#addDirPlayer(titulo,url2,4,img,total)  #ver comentarios que fiz na funçao addDirPlayer
+		
+	page = re.compile("<link rel='next' href='(.+?)' />").findall(codigo_fonte)
+	for prox_pagina in page:
+		addDir('Página Seguinte >>',prox_pagina,2,artfolder + 'proxpagina.png')
+		break
+		
+def obtem_neodrive(url):
+	codigo_fonte = abrir_url(url).result
+	try:
+		url_video = re.findall(r'vurl.=."(.*?)";',codigo_fonte)[0]
+		return [url_video,"-"]
+	except:
+		return ["-","-"]	
+	
+def obtem_url_videopw(url):
+	codigo_fonte = abrir_url(url).result
+	try:
+		url_video = re.findall(r'var vurl2 = "(.*?)";',codigo_fonte)[0]
+		return [url_video,"-"]
+	except:
+		return ["-","-"]	
+
+def obtem_url_mobile(url):
+	codigo_fonte = abrir_url(url).result
+	try:
+		url_video = re.findall(r'src="(.*?goo.gl/.*?)"',codigo_fonte)[0]
+		return [url_video,"-"]
+	except:	
+		return ["-","-"]
+		
+def obtem_url_vidto(url):
+	codigo_fonte = abrir_url(url).result
+	url2 = re.findall(r'top.location = "(.*?)"', codigo_fonte)[0]
+	try:
+		url_video = urlresolver.resolve(url2)
+		return [url_video,"-"]
+	except:
+		pass
+
+def obtem_url_dropvideo(url):
+	codigo_fonte = abrir_url(url).result
+	try:
+		soup = BeautifulSoup(codigo_fonte)
+		lista = soup.findAll('script')
+		js = str(lista[9]).replace('<script>',"").replace('</script>',"")
+		sUnpacked = jsunpack.unpack(js)
+		print sUnpacked
+		url_video = re.findall(r'var vurl2="(.*?)";', sUnpacked)
+		url_video = str(url_video).replace("['","").replace("']","")
+		return [url_video,"-"]
+	except:
+		pass
+
+	
+def player(name,url,iconimage):
+	
+	#print url
+	moobile   = r'src="(.*?Moobile/.*?)"'
+	dropvideo = r'src="(.*?dropvideo.*?/embed.*?)"'
+	vidto     = r'src="(.*?vidto.*?/embed.*?)"'
+	neodrive  = r'src="(.*?neodrive.*?/embed.*?)"'
+	videopw   = r'src="(.*?videopw.com/e.*?)"'
+	
+	mensagemprogresso = xbmcgui.DialogProgress()
+	mensagemprogresso.create('CINEFILMES', 'A resolver link','Por favor aguarde...')
+	mensagemprogresso.update(33)
+	links = []
+	hosts = []
+	matriz = []
+	codigo_fonte = abrir_url(url).result
+	#print codigo_fonte
+	
+	try:
+		links.append(re.findall(moobile, codigo_fonte)[0])
+		hosts.append('Mobile')
+	except:
+		pass
+	
+	try:
+		links.append(re.findall(vidto, codigo_fonte)[0])
+		hosts.append('Vidto')
+	except:
+		pass
+	
+	try:
+		links.append(re.findall(neodrive, codigo_fonte)[0])
+		hosts.append('Neodrive')
+	except:
+		pass
+	
+	try:
+		links.append(re.findall(dropvideo, codigo_fonte)[0])
+		hosts.append('Dropvideo')
+	except:
+		pass
+	
+	try:
+		links.append(re.findall(videopw, codigo_fonte)[0])
+		hosts.append('Videopw')
+	except:
+		pass
+		
+	if not hosts:
+		return
+	
+	index = xbmcgui.Dialog().select('Selecione um dos hosts suportados :', hosts)
+	
+	if index == -1:
+		return
+	
+	url_video = links[index]
+	mensagemprogresso.update(66)
+	
+	print 'Player url: %s' % url_video
+	if 'neodrive' in url_video:
+		matriz = obtem_neodrive(url_video)
+	elif 'dropvideo.com/embed' in url_video:
+		matriz = obtem_url_dropvideo(url_video) 
+	elif 'videopw' in url_video:
+		matriz = obtem_url_videopw(url_video)
+	elif 'Moobile' in url_video:
+		matriz = obtem_url_mobile(url_video)
+	elif 'vidto' in url_video:
+		matriz = obtem_url_vidto(url_video)		
+	else:
+		print "Falha: " + str(url_video)
+	print matriz
+	url = matriz[0]
+	print url
+	if url=='-': return
+	legendas = matriz[1]
+	print "Url do gdrive: " + str(url_video)
+	print "Legendas: " + str(legendas)
+	
+	mensagemprogresso.update(100)
+	mensagemprogresso.close()
+	
+	listitem = xbmcgui.ListItem() # name, iconImage="DefaultVideo.png", thumbnailImage="DefaultVideo.png"
+	listitem.setPath(url)
+	listitem.setProperty('mimetype','video/mp4')
+	listitem.setProperty('IsPlayable', 'true')
+	#try:
+	xbmcPlayer = xbmc.Player(xbmc.PLAYER_CORE_AUTO)
+	xbmcPlayer.play(url)
+	if legendas != '-':
+		if 'timedtext' in legendas:
+			#legenda = xmltosrt.convert(legendas)
+			#try:
+				import os.path
+				sfile = os.path.join(xbmc.translatePath("special://temp"),'sub.srt')
+				sfile_xml = os.path.join(xbmc.translatePath("special://temp"),'sub.xml')#timedtext
+				sub_file_xml = open(sfile_xml,'w')
+				sub_file_xml.write(urllib2.urlopen(legendas).read())
+				sub_file_xml.close()
+				print "Sfile.srt : " + sfile_xml
+				xmltosrt.main(sfile_xml)
+				xbmcPlayer.setSubtitles(sfile)
+			#except:
+			#	pass
+		else:
+			xbmcPlayer.setSubtitles(legendas)
+	#except:
+	#	dialog = xbmcgui.Dialog()
+	#	dialog.ok(" Erro:", " Impossível abrir vídeo! ")
+	#	pass
+	
+def pesquisa():
+	keyb = xbmc.Keyboard('', 'faca a procura') #Chama o keyboard do XBMC com a frase indicada
+	keyb.doModal() #Espera ate que seja confirmada uma determinada string
+	if (keyb.isConfirmed()): #Se a entrada estiver confirmada (isto e, se carregar no OK)
+		search = keyb.getText() #Variavel search fica definida com o conteudo do formulario
+		parametro_pesquisa=urllib.quote(search) #parametro_pesquisa faz o quote da expressao search, isto Ã©, escapa os parametros necessarios para ser incorporado num endereÃ§o url
+		url = 'http://ecfilmes.com/?s=Pesquisar...&tipo=' + str(parametro_pesquisa) #nova definicao de url. str forÃ§a o parametro de pesquisa a ser uma string
+		listar_videos(url) #chama a funÃ§Ã£o listar_videos com o url definido em cima
+
+		###################################################################################
+
+class abrir_url(object):
+	def __init__(self, url, close=True, proxy=None, post=None, mobile=False, referer=None, cookie=None, output='', timeout='10'):
+		if not proxy == None:
+			proxy_handler = urllib2.ProxyHandler({'http':'%s' % (proxy)})
+			opener = urllib2.build_opener(proxy_handler, urllib2.HTTPHandler)
+			opener = urllib2.install_opener(opener)
+		if output == 'cookie' or not close == True:
+			import cookielib
+			cookie_handler = urllib2.HTTPCookieProcessor(cookielib.LWPCookieJar())
+			opener = urllib2.build_opener(cookie_handler, urllib2.HTTPBasicAuthHandler(), urllib2.HTTPHandler())
+			opener = urllib2.install_opener(opener)
+		if not post == None:
+			request = urllib2.Request(url, post)
+		else:
+			request = urllib2.Request(url,None)
+		if mobile == True:
+			request.add_header('User-Agent', 'Mozilla/5.0 (iPhone; CPU; CPU iPhone OS 4_0 like Mac OS X; en-us) AppleWebKit/532.9 (KHTML, like Gecko) Version/4.0.5 Mobile/8A293 Safari/6531.22.7')
+		else:
+			request.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36')
+		if not referer == None:
+			request.add_header('Referer', referer)
+		if not cookie == None:
+			request.add_header('cookie', cookie)
+		response = urllib2.urlopen(request, timeout=int(timeout))
+		if output == 'cookie':
+			result = str(response.headers.get('Set-Cookie'))
+		elif output == 'geturl':
+			result = response.geturl()
+		else:
+			result = response.read()
+		if close == True:
+			response.close()
+		self.result = result
+
+def addLink(name,url,iconimage):
+	ok=True
+	liz=xbmcgui.ListItem(name, iconImage="DefaultVideo.png", thumbnailImage=iconimage)
+	liz.setProperty('fanart_image', fanart)
+	liz.setInfo( type="Video", infoLabels={ "Title": name } )
+	ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=url,listitem=liz)
+	return ok
+
+def addDir(name,url,mode,iconimage,pasta=True,total=1):
+	u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)
+	ok=True
+	liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
+	liz.setProperty('fanart_image', fanart)
+	ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=pasta,totalItems=total)
+	return ok
+
+############################################################################################################
+#                                               GET PARAMS                                                 #
+############################################################################################################
+              
+def get_params():
+        param=[]
+        paramstring=sys.argv[2]
+        if len(paramstring)>=2:
+                params=sys.argv[2]
+                cleanedparams=params.replace('?','')
+                if (params[len(params)-1]=='/'):
+                        params=params[0:len(params)-2]
+                pairsofparams=cleanedparams.split('&')
+                param={}
+                for i in range(len(pairsofparams)):
+                        splitparams={}
+                        splitparams=pairsofparams[i].split('=')
+                        if (len(splitparams))==2:
+                                param[splitparams[0]]=splitparams[1]
+                                
+        return param
+
+      
+params=get_params()
+url=None
+name=None
+mode=None
+iconimage=None
+
+
+try:
+        url=urllib.unquote_plus(params["url"])
+except:
+        pass
+try:
+        name=urllib.unquote_plus(params["name"])
+except:
+        pass
+try:
+        mode=int(params["mode"])
+except:
+        pass
+
+try:        
+        iconimage=urllib.unquote_plus(params["iconimage"])
+except:
+        pass
+
+
+print "Mode: "+str(mode)
+print "URL: "+str(url)
+print "Name: "+str(name)
+print "Iconimage: "+str(iconimage)
+
+
+
+
+###############################################################################################################
+#                                                   MODOS                                                     #
+###############################################################################################################
+
+
+if mode==None or url==None or len(url)<1:
+        print ""
+        CATEGORIES()
+
+elif mode==1:
+	print ""
+	categorias()
+	
+elif mode==2:
+	print ""
+	listar_videos(url)
+	
+elif mode==3:
+	print ""
+	pesquisa()
+
+elif mode==4:
+	print ""
+	player(name,url,iconimage)
+	
+elif mode==5:
+	print ""
+	listar_videos_M18(url)
+	
+xbmcplugin.endOfDirectory(int(sys.argv[1]))
