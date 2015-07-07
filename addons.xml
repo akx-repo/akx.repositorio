@@ -1,16 +1,60 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addons>
-<addon id="repository.demo.kodi" name="Demonstration repository" version="0.0.2" provider-name="Mafarricos">
-	<extension point="xbmc.addon.repository" name="Demonstration Add-on Repository">
-		<info compressed="false">http://raw.github.com/Mafarricos/Mafarricos-kodi-demo-repo/master/addons.xml</info>
-		<checksum>http://raw.github.com/Mafarricos/Mafarricos-kodi-demo-repo/master/addons.xml.md5</checksum>
-		<datadir zip="true">http://raw.github.com/Mafarricos/Mafarricos-kodi-demo-repo/master/repo/</datadir>
+<addon id="akx.repositorio" name="repositorio akx atualizacoes" version="0.0.1" provider-name="gutoakashi1">
+	<extension point="xbmc.addon.repository" name="repositorio akx atualizacoes">
+		<info compressed="false">http://raw.github.com/akx-repo/akx.repositorio/master/addons.xml</info>
+		<checksum>http://raw.github.com/akx-repo/akx.repositorio/master/addons.xml.md5</checksum>
+		<datadir zip="true">http://raw.github.com/akx-repo/akx.repositorio/master/repo/</datadir>
 	</extension>
 	<extension point="xbmc.addon.metadata">
-		<summary>Demonstration Addon</summary>
-		<description>Addon Description</description>
+		<summary>Addon repositorio</summary>
+		<description>akx atualizacoes repositorio</description>
 		<disclaimer></disclaimer>
 		<platform>all</platform>
 	</extension>
+</addon>
+
+<addon id="plugin.video.filmesonlinegratis2" name="FilmesOnlineGratis2" version="0.1.0" provider-name="gutoakashi1">
+  <requires>
+    <import addon="xbmc.python" version="2.1.0"/>
+	<import addon="script.module.urlresolver" version="1.0.0"/>
+	<import addon="script.module.metahandler" optional="true"/>
+	<import addon="script.module.simplejson" optional="true"/>
+	<import addon="script.module.parsedom" optional="true"/>
+	<import addon="script.module.html5lib" optional="true"/>
+  </requires>
+  <extension point="xbmc.python.pluginsource" library="addon.py">
+    <provides>video</provides>
+  </extension>
+  <extension point="xbmc.addon.metadata">
+    <language>en</language>
+    <platform>all</platform>
+    <summary lang="en">visite o site http://www.filmesonlinegratis.net atraves do xbmc</summary>
+    <description lang="en">visite o site http://www.filmesonlinegratis.net atraves do xbmc</description>
+    <platform>all</platform>
+  </extension>
+</addon>
+
+<addon id="script.module.html5lib"
+       name="html5lib-python"
+       version="0.999.0"
+       provider-name="html5lib">
+  <requires>
+    <import addon="xbmc.python"
+    		version="2.1.0"/>
+    <import addon="script.module.six"
+                      version="1.4.1"
+                     optional="false"/>
+  </requires>
+  <extension point="xbmc.python.module"
+             library="lib" />
+  <extension point="xbmc.addon.metadata">
+    <summary>Standards-compliant library for parsing and serializing HTML documents and fragments in Python.</summary>
+    <description>html5lib is a pure-python library for parsing HTML. It is designed to conform to the WHATWG HTML specification, as is implemented by all major web browsers.</description>
+    <platform>all</platform>
+    <license>MIT</license>
+    <source>https://github.com/html5lib/html5lib-python.git</source>
+    <website>https://github.com/html5lib/html5lib-python</website>
+  </extension>
 </addon>
 </addons>
