@@ -1,0 +1,7 @@
+import re
+from bs4 import BeautifulSoup
+
+
+url = 'http://www.superanimes.com/dragon-ball-z/filme-15'
+soup = BeautifulSoup(url)
+print soup.prettify()
