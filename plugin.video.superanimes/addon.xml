@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.superanimes" name="SuperAnimes" version="0.1.0" provider-name="gutoakashi1">
+<addon id="plugin.video.superanimes" name="SuperAnimes" version="1.2.1" provider-name="leandrotsampa">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.urlresolver" version="1.0.0"/>
@@ -8,8 +8,8 @@
     <provides>video</provides>
   </extension>
   <extension point="xbmc.addon.metadata">
-    <summary lang="en">Assista animes dublados e legendados</summary>
-    <description lang="en">Assista animes dublados e legendados</description>
+    <summary lang="en">Assista animes dublados e legendados.</summary>
+    <description lang="en">Assista animes dublados e legendados.</description>
     <disclaimer lang="en"></disclaimer>
     <language></language>
     <platform>all</platform>

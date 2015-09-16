@@ -28,28 +28,33 @@ import xbmcplugin
 import xbmcgui
 import xbmc
 import xbmcaddon
+import json
+import ptvsd
 from bs4 import BeautifulSoup
 
-versao = '0.1.0'
+versao = '1.2.1'
 addon_id = 'plugin.video.superanimes'
 selfAddon = xbmcaddon.Addon(id=addon_id)
 addonfolder = selfAddon.getAddonInfo('path')
 artfolder = addonfolder + '/resources/img/'
 fanart = addonfolder + '/fanart.jpg'
 
+#ptvsd.enable_attach(secret = 'pwd')
+#ptvsd.wait_for_attach()
 
 ##############################MENUS###################################
 
 def CATEGORIES():
-	dialog = xbmcgui.Dialog()
-	dialog.ok("Atualizado", "Addon atualizado por gutoakashi1. email: akx.kodi@bol.com.br")
-	dialog = xbmcgui.Dialog()
-	dialog.ok("Doações",
-			  "Faça sua doação para manter o addon sempre atualizado. Mande um email para akx.kodi@bol.com.br para mais informações")
-	addDir('LISTA', 'http://www.superanimes.com/lista', 1, artfolder + 'categorias.png')
-	addDir('DUBLADOS', 'http://www.superanimes.com/dublado', 1, artfolder + 'destaques.png')
-	addDir('LEGENDADOS', 'http://www.superanimes.com/legendado', 1, artfolder + 'destaques.png')
-	addDir('LANÇAMENTOS', 'http://www.superanimes.com/lancamento', 6, artfolder + 'destaques.png')
+	addDir('Lista de Animes', 'http://www.superanimes.com/lista', 1, artfolder + 'categorias.png')
+	addDir('Animes Dublados', 'http://www.superanimes.com/dublado', 1, artfolder + 'destaques.png')
+	addDir('Animes Legendados', 'http://www.superanimes.com/legendado', 1, artfolder + 'destaques.png')
+	addDir('Animes em Lançamentos', 'http://www.superanimes.com/lancamento', 6, artfolder + 'destaques.png')
+	addDir('Últimos Episódios Lançados', 'http://www.superanimes.com/', 8, artfolder + 'destaques.png')
+	addDir('Tokusatsu', 'http://www.superanimes.com/tokusatsu', 1, artfolder + 'categorias.png')
+	addDir('Live Action', 'http://www.superanimes.com/live-action', 1, artfolder + 'destaques.png')
+	addDir('Filmes de Animes', 'http://www.superanimes.com/filmes', 7, artfolder + 'destaques.png')
+	addDir('Ovas de Animes', 'http://www.superanimes.com/ovas', 7, artfolder + 'destaques.png')
+	
 
 #############################FUNCOES##################################
 
@@ -59,6 +64,10 @@ def listar_animes(url):
 	miniaturas = str(soup.find_all('div', class_='boxLista2Img'))
 	match = re.compile(r'<a href="(.+?)" title="(.+?)">').findall(miniaturas)
 	img = re.compile(r'<img alt=".+?" src="(.+?)" title=".+?"/>').findall(miniaturas)
+
+	# Obter quantidade de paginas
+	paginacao = str(soup.find_all('div', class_='paginacao'))
+	match_pag = re.compile(r'<a href="(.+?)" title="(.+?)">').findall(paginacao)
 
 	a = []
 	for x in range(0, len(match)):
@@ -76,9 +85,10 @@ def listar_animes(url):
 		n = 1
 
 	n = int(n)
-	m = n+1
-	prox_pag = url.replace(str(n), str(m))
-	addDir('Proxima Pagina >>>', prox_pag, 3, artfolder + 'destaques.png')
+	if n <= len(match_pag):
+		m = n+1
+		prox_pag = url.replace(str(n), str(m))
+		addDir('Proxima Pagina >>>', prox_pag, 3, artfolder + 'destaques.png')
 
 def listar_lancamentos(url):
 	codigo_fonte = abrir_url(url).result
@@ -86,6 +96,10 @@ def listar_lancamentos(url):
 	miniaturas = str(soup.find_all('div', class_='lancamentoBoxNome'))
 	match = re.compile(r'<a href="(.+?)" style=".*?" title="(.+?)">').findall(miniaturas)
 	img = re.compile(r'<img height=".*?" src="(.+?)" style=".*?" width=".*?">').findall(miniaturas)
+
+	# Obter quantidade de paginas
+	paginacao = str(soup.find_all('div', class_='paginacao'))
+	match_pag = re.compile(r'<a href="(.+?)" title="(.+?)">').findall(paginacao)
 
 	a = []
 	for x in range(0, len(match)):
@@ -103,51 +117,21 @@ def listar_lancamentos(url):
 		n = 1
 
 	n = int(n)
-	m = n+1
-	prox_pag = url.replace(str(n), str(m))
-	addDir('Proxima Pagina >>>', prox_pag, 6, artfolder + 'destaques.png')
+	if n <= len(match_pag):
+		m = n+1
+		prox_pag = url.replace(str(n), str(m))
+		addDir('Proxima Pagina >>>', prox_pag, 6, artfolder + 'destaques.png')
 
-'''
 def listar_filmes(url):
 	codigo_fonte = abrir_url(url).result
 	soup = BeautifulSoup(codigo_fonte)
 	miniaturas = str(soup.find_all('div', class_='boxLista2Filme'))
-	print miniaturas
 	match = re.compile(r'<a href="(.+?)" title="(.+?)">').findall(miniaturas)
 	img = re.compile(r'<img alt=".*?" height=".*?" src="(.+?)" title=".*?" width=".*?"/>').findall(miniaturas)
-
-	a = []
-	for x in range(0, len(match)):
-		temp = [match[x][0], match[x][1], img[x]]
-		a.append(temp)
-
-	total = len(a)
-	for url2, titulo, img in a:
-		addDir(titulo, url2, 8, img, True, total)
-
-	try:
-		n = re.search(r'http://www.superanimes.com/.+?\?&pagina=(.?)', url).group(1)
-	except:
-		url = url + '?&pagina=1'
-		n = 1
-
-	n = int(n)
-	m = n+1
-	prox_pag = url.replace(str(n), str(m))
-	addDir('Proxima Pagina >>>', prox_pag, 7, artfolder + 'destaques.png')
-'''
-
-def montar_url(url, name):
-	url = url + '?letra=%s' % name
-	listar_animes(url)
-
-
-def listar_animes2(url):
-	codigo_fonte = abrir_url(url).result
-	soup = BeautifulSoup(codigo_fonte)
-	miniaturas = str(soup.find_all('div', class_='epsBoxImg'))
-	match = re.compile(r'<a href="(.+?)" title="(.+?)">').findall(miniaturas)
-	img = re.compile(r'<img alt=".+?" src="(.+?)" title=".+?"/>').findall(miniaturas)
+	
+	# Obter quantidade de paginas
+	paginacao = str(soup.find_all('div', class_='paginacao'))
+	match_pag = re.compile(r'<a href="(.+?)" title="(.+?)">').findall(paginacao)
 
 	a = []
 	for x in range(0, len(match)):
@@ -165,12 +149,94 @@ def listar_animes2(url):
 		n = 1
 
 	n = int(n)
-	m = n+1
+	if n <= len(match_pag):
+		m = n+1
+		prox_pag = url.replace(str(n), str(m))
+		addDir('Proxima Pagina >>>', prox_pag, 7, artfolder + 'destaques.png')
 
-	prox_pag = url.replace(str(n), str(m))
+def listar_epslancamento(url):
+	codigo_fonte = abrir_url(url).result
+	soup = BeautifulSoup(codigo_fonte)
+	miniaturas = str(soup.find_all('div', class_='boxDestakTImg'))
+	match = re.compile(r'<a href="(.+?)" title="(.+?)">').findall(miniaturas)
+	img = re.compile(r'<img alt=".*?" src="(.+?)" title=".*?"/>').findall(miniaturas)
 
-	print prox_pag
-	addDir('Proxima Pagina >>>', prox_pag, 4, artfolder + 'destaques.png')
+	a = []
+	for x in range(0, len(match)):
+		temp = [match[x][0], match[x][1], img[x]]
+		a.append(temp)
+
+	total = len(a)
+	for url2, titulo, img in a:
+		if titulo.startswith("Assistir "):
+		    addDir(titulo[9:], url2, 5, img, False, total)
+		else:
+		    addDir(titulo, url2, 5, img, False, total)
+
+	prox_pag = url  + '?&pagina=4'
+	addDir('Mais Lançamentos >>>', prox_pag, 9, artfolder + 'destaques.png')
+
+def montar_url(url, name):
+	url = url + '?letra=%s' % name
+	listar_animes(url)
+
+def listar_animes2(url):
+	codigo_fonte = abrir_url(url).result
+	soup = BeautifulSoup(codigo_fonte)
+	miniaturas = str(soup.find_all('div', class_='epsBoxImg'))
+	match = re.compile(r'<a href="(.+?)" title="(.+?)">').findall(miniaturas)
+	img = re.compile(r'<img alt=".+?" src="(.+?)" title=".+?"/>').findall(miniaturas)
+	
+	# Obter quantidade de paginas
+	paginacao = str(soup.find_all('div', class_='paginacao'))
+	match_pag = re.compile(r'<a href="(.+?)" title="(.+?)">').findall(paginacao)
+
+	a = []
+	for x in range(0, len(match)):
+		temp = [match[x][0], match[x][1], img[x]]
+		a.append(temp)
+
+	total = len(a)
+	for url2, titulo, img in a:
+		if titulo.endswith("Online"):
+		    addDir(titulo[0:len(titulo) - 6], url2, 5, img, False, total)
+		else:
+		    addDir(titulo, url2, 5, img, False, total)
+
+	try:
+		n = re.search(r'http://www.superanimes.com/.+?\?&pagina=(.?)', url).group(1)
+	except:
+		url = url + '?&pagina=1'
+		n = 1
+
+	n = int(n)
+	if n <= len(match_pag):
+		m = n+1
+		prox_pag = url.replace(str(n), str(m))
+		addDir('Proxima Pagina >>>', prox_pag, 4, artfolder + 'destaques.png')
+
+def listar_epslancamento2(url):
+	n = url.replace("http://www.superanimes.com/?&pagina=", "")
+	codigo_fonte = abrir_url(url.replace("?&pagina=%s" % n, "pager.php"), post="id=eps&offset=%s&limit=8&acao=more" % n).result
+	soup = BeautifulSoup(codigo_fonte)
+	miniaturas = str(soup.find_all('div', class_='boxDestakTImg'))
+	match = re.compile(r'<a href="(.+?)" title="(.+?)">').findall(miniaturas)
+	img = re.compile(r'<img alt=".*?" src="(.+?)" title=".*?"/>').findall(miniaturas)
+
+	a = []
+	for x in range(0, len(match)):
+		temp = [match[x][0], match[x][1], img[x]]
+		a.append(temp)
+
+	total = len(a)
+	for url2, titulo, img in a:
+		if titulo.startswith("Assistir "):
+		    addDir(titulo[9:], url2, 5, img, False, total)
+		else:
+		    addDir(titulo, url2, 5, img, False, total)
+
+	prox_pag = url.replace(str(n), str(int(n) + 8))
+	addDir('Mais Lançamentos >>>', prox_pag, 9, artfolder + 'destaques.png')
 
 def letras(url):
 	addDir('#', url, 2, artfolder + 'zero.jpg')
@@ -205,27 +271,75 @@ def letras(url):
 def url_video(url):
 	mensagemprogresso = xbmcgui.DialogProgress()
 	mensagemprogresso.create('SuperAnimes', 'A resolver link', 'Por favor aguarde...')
-	mensagemprogresso.update(50)
+	mensagemprogresso.update(15)
+	if mensagemprogresso.iscanceled():
+		return
 
 	codigo_fonte = abrir_url(url).result
+	mensagemprogresso.update(35)
+	if mensagemprogresso.iscanceled():
+		return
 	soup = BeautifulSoup(codigo_fonte)
 	video = str(soup.find('video', id = 'example_video_1'))
-	vurl = re.compile(r'<source src="(.*?)" type=.+?>').findall(video)
-	vurl = str(vurl).replace("['","").replace("']","")
-	player(vurl)
+	if video != 'None':
+		vurl = re.compile(r'<source src="(.*?)" type=.+?>').findall(video)
+		vurl = str(vurl).replace("['","").replace("']","")
+	else:
+		vurl_download = str(soup.find('input', id = 'id'))
+		id_download = re.compile(r'value="(.*?)"').findall(vurl_download)
+		id_download = str(id_download).replace("['","").replace("']","")
+		if id_download != '':
+			codigo_fonte = abrir_url('http://www.superanimes.com/download.php?file=%s' % id_download).result
+			soup = BeautifulSoup(codigo_fonte)
+			vurl_download = str(soup.findAll('a')[0])
+			vurl = re.compile(r'href="(.*?)"').findall(vurl_download)
+			vurl = str(vurl).replace("['","").replace("']","")
+		else:
+			vurl = '[]'
 
-def player(url):
-	mensagemprogresso = xbmcgui.DialogProgress()
-	mensagemprogresso.create('SuperAnimes', 'A resolver link', 'Por favor aguarde...')
-	mensagemprogresso.update(100)
+	mensagemprogresso.update(50)
+	if mensagemprogresso.iscanceled():
+		return
+
+	if vurl == '[]' or vurl == '':
+		try:
+			mensagemprogresso.update(59)
+			if mensagemprogresso.iscanceled():
+				return
+			video = str(soup.find('meta', property = 'og:video'))
+			vurl = re.compile(r'content="(.*?)"').findall(video)[0]
+			vurl = str(vurl).replace("['","").replace("']","").replace("http://vimeo.com/moogaloop.swf?clip_id=", "https://player.vimeo.com/video/")
+			response = abrir_url('%s/config' % vurl).result
+			mensagemprogresso.update(80)
+			if mensagemprogresso.iscanceled():
+				return
+			response_dict = json.loads(response)
+			vurl = str(response_dict['request']['files']['h264']['sd']['url']).replace("['","").replace("']","")
+			mensagemprogresso.update(99)
+			if mensagemprogresso.iscanceled():
+				return
+			player(mensagemprogresso, vurl)
+		except:
+			mensagemprogresso.close()
+			pass
+	else:
+		player(mensagemprogresso, vurl)
+
+def player(dialog, url):
+	#mensagemprogresso = xbmcgui.DialogProgress()
+	#mensagemprogresso.create('SuperAnimes', 'A resolver link', 'Por favor aguarde ...')
+	dialog.update(100)
 
 	listitem = xbmcgui.ListItem()  # name, iconImage="DefaultVideo.png", thumbnailImage="DefaultVideo.png"
+	listitem.setLabel(name)
+	listitem.setLabel2(name)
 	listitem.setPath(url)
 	listitem.setProperty('mimetype', 'video/mp4')
 	listitem.setProperty('IsPlayable', 'true')
 	# try:
 	xbmcPlayer = xbmc.Player(xbmc.PLAYER_CORE_AUTO)
-	xbmcPlayer.play(url)
+	xbmcPlayer.play(url, listitem)
+	dialog.close()
 
 class abrir_url(object):
 	def __init__(self, url, close=True, proxy=None, post=None, mobile=False, referer=None, cookie=None, output='',
@@ -264,7 +378,6 @@ class abrir_url(object):
 		if close == True:
 			response.close()
 		self.result = result
-
 
 def addDir(name, url, mode, iconimage, pasta=True, total=1):
 	u = sys.argv[0] + "?url=" + urllib.quote_plus(url) + "&mode=" + str(mode) + "&name=" + urllib.quote_plus(name)
@@ -358,6 +471,18 @@ elif mode == 5:
 elif mode == 6:
 	print ""
 	listar_lancamentos(url)
+	
+elif mode == 7:
+	print ""
+	listar_filmes(url)
+
+elif mode == 8:
+	print ""
+	listar_epslancamento(url)
+
+elif mode == 9:
+	print ""
+	listar_epslancamento2(url)
 
 
 xbmcplugin.endOfDirectory(int(sys.argv[1]))

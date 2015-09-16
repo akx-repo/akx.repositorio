@@ -1,2 +1,9 @@
-v0.1.0
-    - Primeira versão do addon
+1.2.1
+- Corrigido e adaptado algumas funções de acordo com as mudanças do site.
+
+1.2.0
+- Feito várias correções e adicionado suporte a mais conteúdo.
+- Ficou muito bom e utilizavél porém ai vai melhorar ;)
+
+0.1.0
+- Primeira versão do addon
