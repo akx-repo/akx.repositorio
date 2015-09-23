@@ -1,3 +1,6 @@
+1.2.2
+- Adaptado a url de video com as mudanças do site
+
 1.2.1
 - Corrigido e adaptado algumas funções de acordo com as mudanças do site.
 

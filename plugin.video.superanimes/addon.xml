@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.superanimes" name="SuperAnimes" version="1.2.1" provider-name="leandrotsampa">
+<addon id="plugin.video.superanimes" name="SuperAnimes" version="1.2.2" provider-name="gutoakashi">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.urlresolver" version="1.0.0"/>

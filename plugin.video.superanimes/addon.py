@@ -28,11 +28,9 @@ import xbmcplugin
 import xbmcgui
 import xbmc
 import xbmcaddon
-import json
-import ptvsd
 from bs4 import BeautifulSoup
 
-versao = '1.2.1'
+versao = '1.2.2'
 addon_id = 'plugin.video.superanimes'
 selfAddon = xbmcaddon.Addon(id=addon_id)
 addonfolder = selfAddon.getAddonInfo('path')
@@ -271,63 +269,25 @@ def letras(url):
 def url_video(url):
 	mensagemprogresso = xbmcgui.DialogProgress()
 	mensagemprogresso.create('SuperAnimes', 'A resolver link', 'Por favor aguarde...')
-	mensagemprogresso.update(15)
-	if mensagemprogresso.iscanceled():
-		return
-
 	codigo_fonte = abrir_url(url).result
-	mensagemprogresso.update(35)
-	if mensagemprogresso.iscanceled():
-		return
 	soup = BeautifulSoup(codigo_fonte)
-	video = str(soup.find('video', id = 'example_video_1'))
-	if video != 'None':
-		vurl = re.compile(r'<source src="(.*?)" type=.+?>').findall(video)
-		vurl = str(vurl).replace("['","").replace("']","")
-	else:
-		vurl_download = str(soup.find('input', id = 'id'))
-		id_download = re.compile(r'value="(.*?)"').findall(vurl_download)
-		id_download = str(id_download).replace("['","").replace("']","")
-		if id_download != '':
-			codigo_fonte = abrir_url('http://www.superanimes.com/download.php?file=%s' % id_download).result
-			soup = BeautifulSoup(codigo_fonte)
-			vurl_download = str(soup.findAll('a')[0])
-			vurl = re.compile(r'href="(.*?)"').findall(vurl_download)
-			vurl = str(vurl).replace("['","").replace("']","")
-		else:
-			vurl = '[]'
+	baixar = str(soup.find('div', class_='selectVideo'))
+	burl = str(re.findall(r'<a href="(.+?)" title=".+?">', baixar))
+	burl = burl.replace("['","").replace("']","")
 
 	mensagemprogresso.update(50)
 	if mensagemprogresso.iscanceled():
 		return
 
-	if vurl == '[]' or vurl == '':
-		try:
-			mensagemprogresso.update(59)
-			if mensagemprogresso.iscanceled():
-				return
-			video = str(soup.find('meta', property = 'og:video'))
-			vurl = re.compile(r'content="(.*?)"').findall(video)[0]
-			vurl = str(vurl).replace("['","").replace("']","").replace("http://vimeo.com/moogaloop.swf?clip_id=", "https://player.vimeo.com/video/")
-			response = abrir_url('%s/config' % vurl).result
-			mensagemprogresso.update(80)
-			if mensagemprogresso.iscanceled():
-				return
-			response_dict = json.loads(response)
-			vurl = str(response_dict['request']['files']['h264']['sd']['url']).replace("['","").replace("']","")
-			mensagemprogresso.update(99)
-			if mensagemprogresso.iscanceled():
-				return
-			player(mensagemprogresso, vurl)
-		except:
-			mensagemprogresso.close()
-			pass
-	else:
-		player(mensagemprogresso, vurl)
+	codigo2 = abrir_url(burl).result
+	soup2 = BeautifulSoup(codigo2).prettify()
+	vurl = str(re.findall(r'<link href="(.+?)" itemprop="embedURL">', soup2))
+	vurl = vurl.replace("[u'","").replace("']","")
+	player(mensagemprogresso, vurl)
+
 
 def player(dialog, url):
-	#mensagemprogresso = xbmcgui.DialogProgress()
-	#mensagemprogresso.create('SuperAnimes', 'A resolver link', 'Por favor aguarde ...')
+
 	dialog.update(100)
 
 	listitem = xbmcgui.ListItem()  # name, iconImage="DefaultVideo.png", thumbnailImage="DefaultVideo.png"
