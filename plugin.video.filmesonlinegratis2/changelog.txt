@@ -1,2 +1,5 @@
 <07/07/2015>
 * Fix seriados
+
+29/09/2015
+arrumado host dropvideo

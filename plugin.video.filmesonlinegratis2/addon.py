@@ -34,7 +34,7 @@ except:
 
 h = HTMLParser.HTMLParser()
 
-versao = '0.1.1'
+versao = '0.1.2'
 addon_id = 'plugin.video.filmesonlinegratis2'
 selfAddon = xbmcaddon.Addon(id=addon_id)
 addonfolder = selfAddon.getAddonInfo('path')
@@ -47,10 +47,10 @@ fanart = addonfolder + '/fanart.jpg'
 
 def CATEGORIES():
 	dialog = xbmcgui.Dialog()
-	dialog.ok("Atualizado", "Addon atualizado por gutoakashi1. email: akx.kodi@bol.com.br")
-	dialog = xbmcgui.Dialog()
-	dialog.ok("Doações",
-			  "Faça sua doação para manter o addon sempre atualizado. Mande um email para akx.kodi@bol.com.br para mais informações")
+	#dialog.ok("Atualizado", "Addon atualizado por gutoakashi1. email: akx.kodi@bol.com.br")
+	#dialog = xbmcgui.Dialog()
+	#dialog.ok("Doações",
+	#		  "Faça sua doação para manter o addon sempre atualizado. Mande um email para akx.kodi@bol.com.br para mais informações")
 	addDir('CATEGORIAS', '-', 1, artfolder + 'categorias.png')
 	addDir('LANCAMENTOS', 'http://www.filmesonlinegratis.net/filmes-lancamentos', 2, artfolder + 'categorias.png')
 	addDir('SERIADOS', 'http://www.filmesonlinegratis.net/series', 5, artfolder + 'destaques.png')
@@ -294,9 +294,10 @@ def obtem_url_dropvideo(url):
 	try:
 		soup = BeautifulSoup(codigo_fonte)
 		lista = soup.findAll('script')
-		js = str(lista[9]).replace('<script>', "").replace('</script>', "")
+		js = str(lista).replace('<script>', "").replace('</script>', "")
+		#print js
 		sUnpacked = jsunpack.unpack(js)
-		# print sUnpacked
+		#print sUnpacked
 		url_video = re.findall(r'var vurl2="(.*?)";', sUnpacked)
 		url_video = str(url_video).replace("['", "").replace("']", "")
 		return [url_video, "-"]

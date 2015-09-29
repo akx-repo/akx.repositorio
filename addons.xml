@@ -14,7 +14,27 @@
 	</extension>
 </addon>
 
-<addon id="plugin.video.filmesonlinegratis2" name="FilmesOnlineGratis2" version="0.1.1" provider-name="gutoakashi1">
+<addon id="plugin.video.armagedomfilmes" name="ArmagedomFilmes" version="0.2.9" provider-name="gutoakashi">
+  <requires>
+    <import addon="xbmc.python" version="2.1.0"/>
+	<import addon="script.module.urlresolver" version="1.0.0"/>
+	<import addon="script.module.metahandler" optional="true"/>
+	<import addon="script.module.simplejson" optional="true"/>
+	<import addon="script.module.parsedom" optional="true"/>
+  </requires>
+  <extension point="xbmc.python.pluginsource" library="addon.py">
+    <provides>video</provides>
+  </extension>
+  <extension point="xbmc.addon.metadata">
+    <language>en</language>
+    <platform>all</platform>
+    <summary lang="en">visite o site http://www.armagedomfilmes.biz/ atraves do xbmc</summary>
+    <description lang="en">visite o site http://www.armagedomfilmes.biz/ atraves do xbmc</description>
+    <platform>all</platform>
+  </extension>
+</addon>
+
+<addon id="plugin.video.filmesonlinegratis2" name="FilmesOnlineGratis2" version="0.1.2" provider-name="gutoakashi1">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
 	<import addon="script.module.urlresolver" version="1.0.0"/>
