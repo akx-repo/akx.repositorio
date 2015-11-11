@@ -34,7 +34,7 @@ except:
 
 h = HTMLParser.HTMLParser()
 
-versao = '0.1.2'
+versao = '0.1.3'
 addon_id = 'plugin.video.filmesonlinegratis2'
 selfAddon = xbmcaddon.Addon(id=addon_id)
 addonfolder = selfAddon.getAddonInfo('path')
@@ -327,9 +327,15 @@ def play(url):
 
 
 def play_series(url):
-	junto = re.findall(r'http://www.filmesonlinegratis.net/eps/.+?(.*)', url)
+
+	mensagemprogresso = xbmcgui.DialogProgress()
+	mensagemprogresso.create('FILMESONLINEGRATIS', 'A resolver link', 'Por favor aguarde...')
+	mensagemprogresso.update(33)
+
+	junto = re.findall(r'http://www.filmesonlinegratis.net/eps2/.+?(.*)', url)
 	junto = str(junto).replace("['", "").replace("']", "").replace("&amp", "")
 	hosts = str(junto).split('&')
+
 
 
 	a = []
@@ -379,10 +385,6 @@ class Player(object):
 		neodrive = r'data-src="(.*?neodrive.*?/embed.*?)"'
 		videopw = r'data-src="(.*?videopw.com/e.*?)"'
 		vidig = r'data-src="(.*?vidigvideo.com/embed-.*?)"'
-
-		mensagemprogresso = xbmcgui.DialogProgress()
-		mensagemprogresso.create('FILMESONLINEGRATIS', 'A resolver link', 'Por favor aguarde...')
-		mensagemprogresso.update(33)
 
 		# print "codigo fonte: " + codigo_fonte
 		try:
