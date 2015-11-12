@@ -290,6 +290,7 @@ def obtem_url_vidig(url):
 
 
 def obtem_url_dropvideo(url):
+	print "url: %s" % url
 	codigo_fonte = abrir_url(url).result
 	try:
 		soup = BeautifulSoup(codigo_fonte)
@@ -332,7 +333,7 @@ def play_series(url):
 	mensagemprogresso.create('FILMESONLINEGRATIS', 'A resolver link', 'Por favor aguarde...')
 	mensagemprogresso.update(33)
 
-	junto = re.findall(r'http://www.filmesonlinegratis.net/eps2/.+?(.*)', url)
+	junto = re.findall(r'http://www.filmesonlinegratis.net/eps.*?/.+?(.*)', url)
 	junto = str(junto).replace("['", "").replace("']", "").replace("&amp", "")
 	hosts = str(junto).split('&')
 
