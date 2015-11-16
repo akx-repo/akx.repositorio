@@ -34,7 +34,7 @@ except:
 
 h = HTMLParser.HTMLParser()
 
-versao = '0.1.3'
+versao = '0.1.4'
 addon_id = 'plugin.video.filmesonlinegratis2'
 selfAddon = xbmcaddon.Addon(id=addon_id)
 addonfolder = selfAddon.getAddonInfo('path')
