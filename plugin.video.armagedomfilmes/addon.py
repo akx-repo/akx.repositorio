@@ -24,6 +24,7 @@
 import urllib,urllib2,re,xbmcplugin,xbmcgui,xbmc,xbmcaddon,HTMLParser,xmltosrt,os
 import urlresolver
 import jsunpack
+import html5lib
 from bs4 import BeautifulSoup
 try:
     import json
@@ -32,7 +33,7 @@ except:
 h = HTMLParser.HTMLParser()
 
 
-versao = '0.2.9'
+versao = '0.3.0'
 addon_id = 'plugin.video.armagedomfilmes'
 selfAddon = xbmcaddon.Addon(id=addon_id)
 addonfolder = selfAddon.getAddonInfo('path')
@@ -65,7 +66,7 @@ def CATEGORIES():
 def categorias():
 	addDir('BLURAY','http://www.armagedomfilmes.biz/?cat=5529',2,artfolder + 'bluray.jpg')
 	addDir('LEGENDADOS','http://www.armagedomfilmes.biz/?s=legendado',2,artfolder + 'legendados.jpg')
-	addDir('ANIMES','http://www.armagedomfilmes.biz/?cat=36',9,artfolder + 'animes.jpg')
+	addDir('ANIMES','-',13,artfolder + 'animes.jpg')
 	addDir('ACAO','http://www.armagedomfilmes.biz/?cat=3227',2,artfolder + 'acao.jpg')
 	addDir('ANIMACAO','http://www.armagedomfilmes.biz/?cat=3228',2,artfolder + 'animacao.jpg')
 	addDir('AVENTURA','http://www.armagedomfilmes.biz/?cat=3230',2,artfolder + 'aventura.jpg')
@@ -98,8 +99,11 @@ def listar_videos(url):
 		img = filme.img["src"]
 		addDir(titulo.encode('utf8'),url,4,img,False,len(filmes)) 
 
-	pagenavi = BeautifulSoup(soup.find('div', { "class" : "wp-pagenavi" }).prettify())("a", { "class" : "nextpostslink" })[0]["href"]
-	addDir('Página Seguinte >>',pagenavi,2,artfolder + 'prox.png')
+	try:	
+		pagenavi = BeautifulSoup(soup.find('div', { "class" : "wp-pagenavi" }).prettify())("a", { "class" : "nextpostslink" })[0]["href"]
+		addDir('Página Seguinte >>',pagenavi,2,artfolder + 'prox.png')
+	except:
+		pass	
 
 	xbmcplugin.setContent(int(sys.argv[1]), 'movies')
 	xbmc.executebuiltin('Container.SetViewMode(503)')
@@ -123,35 +127,69 @@ def listar_series(url):
 			pass
 
 	addDir('Página Seguinte >>','http://www.armagedomfilmes.biz/?cat=21&paged='+pagina+'|'+pagina,6,artfolder + 'prox.png')
+
+def animes_dublados_legendados():
+	addDir('ANIMES DUBLADOS','http://www.animesonlinex.com.br/animes-dublados.html',9,artfolder + 'animes.jpg')
+	addDir('ANIMES LEGENDADOS','http://www.animesonlinex.com.br/animes-legendados.html',9,artfolder + 'animes.jpg')
 	
 def listar_animes(url):
 
-	soup = BeautifulSoup(abrir_url(url))
-	content = BeautifulSoup(soup.find("div", { "class" : "bic-miniaturas" }).prettify())
-	series = content("div", { "class" : "bic-miniatura" })
 	codigo_fonte = abrir_url(url)
-	
-	total = len(series)
-	for serie in series:
-		titulo = serie.a['title']
-		titulo = titulo.replace('&#8211;',"-").replace('&#8217;',"'").replace('Assistir ','')
-		try:
-			addDir(titulo.encode('utf-8'),serie.a['href'],12,serie.img['src'],True,total)
-		except:
-			pass
-		
-	pagenavi = BeautifulSoup(soup.find('div', { "class" : "wp-pagenavi" }).prettify())("a", { "class" : "nextpostslink" })[0]["href"]
-	addDir('Página Seguinte >>',pagenavi,2,artfolder + 'prox.png')
+	soup = BeautifulSoup(codigo_fonte)
+	content = str(soup.find("div", id='listAnimes'))
+	match = re.compile(r'<a href="(.+?)" title="(.+?)">').findall(content)
 
-	xbmcplugin.setContent(int(sys.argv[1]), 'movies')
-	xbmc.executebuiltin('Container.SetViewMode(503)')		
+	a = []  # url titulo img
+	for x in range(0, len(match)):
+		temp = [match[x][0], match[x][1]];
+		a.append(temp);
+
+	total = len(a)
+	for url2, titulo in a:
+		addDir(titulo, url2, 10, "", True, total)
+
+
+def listar_episodios_animes(url):
+	codigo_fonte = abrir_url(url)
+	soup = BeautifulSoup(codigo_fonte)
+	content = str(soup.find("div", id='listAnimes'))
+	match = re.compile(r'<a href="(.*?)" title="(.*?)"><img alt=".*?" height="95" src="(.*?)" title=".*?" width="140"/></a>').findall(content)
+	
+	a = []  # url titulo img
+	for x in range(0, len(match)):
+		temp = [match[x][0], match[x][1], match[x][2]];
+		a.append(temp);
+
+	total = len(a)
+	for url2, titulo, img in a:
+		titulo = titulo.replace("EpisÃ³dio", "Episodio")
+		addDir(titulo, url2, 4, img, False, total)
+
+	paginacao = str(soup.find("div", id='paginacao'))
+	match_pag = re.compile(r'<a href="(.+?)">').findall(paginacao)
+
+	try:
+		n = re.search(r'http://www.animesonlinex.com.br/.+?/page=(.?)', url).group(1)
+		print n
+	except:
+		url = url + '/page=1'
+		n = 1
+
+	n = int(n)
+	if n <= len(match_pag):
+		m = n+1
+		prox_pag = url.replace(str(n), str(m))
+		print prox_pag
+		addDir('Proxima Pagina >>>', prox_pag, 10, artfolder + 'destaques.png')
+
+	
 	
 	
 def listar_temporadas(url):
 
 	codigo_fonte = abrir_url(url)
 	soup = BeautifulSoup(abrir_url(url))
-	conteudo = BeautifulSoup(soup.find("ul", { "class" : "bp-series" }).prettify())
+	conteudo = BeautifulSoup(str(soup.find("ul", class_="bp-series")))
 	temporadas = conteudo("li")
 	
 	total = len(temporadas)
@@ -178,13 +216,14 @@ def listar_series_f2(name,url):
 	soup = BeautifulSoup(abrir_url(url))
 	content = BeautifulSoup(soup.find("li", { "class" : "serie"+n+"-code" }).prettify())
 	episodios = content.findAll("a")
-	print episodios[0]
+	#print episodios[0]
 	
 	a = [] # url titulo img
 	for episodio in episodios:
 		try:
 			xml = BeautifulSoup(abrir_url(episodio["href"]+'/feed'))
-			title = xml.title.string.encode('utf-8').replace('Comentários sobre: Assistir ','')
+			#print xml
+			title = xml.title.string.encode('utf-8').replace('ComentÃ¡rios sobre: Assistir ','').replace('EpisÃ³dio', 'Episodio').replace('â€“','-')
 			try:
 				if "html" in os.path.basename(episodio["href"]):
 					temp = [episodio["href"],title]
@@ -252,6 +291,36 @@ def obtem_cloudzilla(url):
 	except:
 		return ["-","-"]
 
+def obtem_url_animes(url):
+
+	#print url
+	codigo_fonte = abrir_url(url)
+	soup = BeautifulSoup(codigo_fonte, "html5lib")
+	link = str(soup.find('div', id='mobile', class_='aba'))
+	try:
+		url_anime = str(re.compile(r'<video autobuffer"="" controls="" height=".+?" src="(.+?)" width=".+?"></video>').findall(link))
+		url_anime = url_anime.replace("['", "").replace("']", "")
+		return [url_anime,"-"]
+	except:
+		return ["-","-"]
+
+def obtem_flashx(url):
+	url = url.replace("embed-","").replace("-780x450","")
+	#print url
+	try:
+		url_video = urlresolver.resolve(url)
+		return [url_video, "-"]
+	except:
+		return ["-", "-"]
+
+def obtem_openload(url):
+	try:
+		url_video = urlresolver.resolve(url)
+		return [url_video, "-"]
+	except:
+		return ["-", "-"]
+
+
 def player(name,url,iconimage):
 	
 	try:
@@ -263,6 +332,8 @@ def player(name,url,iconimage):
 		videopw = r'src=".*?videopw.*?id=(.*?)"'
 		cloudzilla = r'cloudzilla.php.id=(.*?)"'
 		cloudzilla_f = r'http://www.cloudzilla.to/share/file/(.*?)"'
+		flashx = r'src="(.*?flashx.tv/.*?)"'
+		openload = r'src="(.*?openload.co/embed/.*?)"'
 		
 		mensagemprogresso = xbmcgui.DialogProgress()
 		mensagemprogresso.create('ArmagedonFilmes', 'A resolver link','Por favor aguarde...')
@@ -271,7 +342,18 @@ def player(name,url,iconimage):
 		hosts = []
 		matriz = []
 		codigo_fonte = abrir_url(url)
-		
+
+		try:
+			if re.findall(r'http://www.animesonlinex.com.br/.*?', url):
+				links.append(url)
+				hosts.append('ANIMES')
+		except:
+			pass
+		try:
+			links.append(re.findall(flashx, codigo_fonte)[0])
+			hosts.append('Flashx')
+		except:
+			pass				
 		try:
 			links.append(re.findall(dropvideo, codigo_fonte)[0])
 			hosts.append('Dropvideo')
@@ -319,6 +401,12 @@ def player(name,url,iconimage):
 			hosts.append('CloudZilla(Legendado)')
 		except:
 			pass
+
+		try:
+			links.append(re.findall(openload, codigo_fonte)[0])
+			hosts.append('Openload')
+		except:
+			pass	
 			
 		if not hosts:
 			return
@@ -341,7 +429,14 @@ def player(name,url,iconimage):
 		elif 'neodrive' in url_video:
 			matriz = obtem_neodrive(url_video)
 		elif 'videopw' in url_video:
-			matriz = obtem_videopw(url_video)			
+			matriz = obtem_videopw(url_video)
+		elif 'flashx.tv' in url_video:
+			matriz = obtem_flashx(url_video)		
+		elif 'animesonlinex' in url_video:
+			matriz = obtem_url_animes(url_video)
+		elif 'openload.co/embed' in url_video:
+			matriz = obtem_openload(url_video)	
+				
 		else:
 			print "Falha: " + str(url_video)
 		print matriz
@@ -395,13 +490,13 @@ def pesquisa_filme():
 		search = keyb.getText() #Variavel search fica definida com o conteudo do formulario
 		parametro_pesquisa=urllib.quote(search) #parametro_pesquisa faz o quote da expressao search, isto Ã©, escapa os parametros necessarios para ser incorporado num endereÃ§o url
 		url = 'http://www.armagedomfilmes.biz/?s=%s&s-btn=buscar' % str(parametro_pesquisa) #nova definicao de url. str forÃ§a o parametro de pesquisa a ser uma string
-		print url
+		#print url
 		soup = BeautifulSoup(abrir_url(url))
 		content = BeautifulSoup(soup.find("div", { "class" : "bic-miniaturas" }).prettify())
 		filmes = content("div", { "class" : "bic-miniatura" })
-		print filmes[0]
+		#print filmes[0]
 		for filme in filmes:
-			titulo = filme.a["title"].replace('Assistir ','')
+			titulo = filme.a['title'].replace('Assistir ','')
 			url = filme.a["href"]
 			img = filme.img["src"]
 			addDir(titulo.encode('utf8'),url,4,img,False,len(filmes))
@@ -554,10 +649,20 @@ elif mode==8:
 	
 elif mode==9:
 	print ""
-	listar_animes(url)	
+	listar_animes(url)
+
+elif mode==10:
+	listar_episodios_animes(url)
+
+elif mode==11:
+	obter_url_anime(url)			
 	
 elif mode==12:
 	print "Mode 12"
 	listar_temporadas(url)
+
+elif mode==13:
+	animes_dublados_legendados()	
+
 	
 xbmcplugin.endOfDirectory(int(sys.argv[1]))
