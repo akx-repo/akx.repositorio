@@ -34,7 +34,7 @@ except:
 
 h = HTMLParser.HTMLParser()
 
-versao = '0.1.4'
+versao = '0.1.5'
 addon_id = 'plugin.video.filmesonlinegratis2'
 selfAddon = xbmcaddon.Addon(id=addon_id)
 addonfolder = selfAddon.getAddonInfo('path')
@@ -305,6 +305,20 @@ def obtem_url_dropvideo(url):
 	except:
 		pass
 
+def obtem_openload(url):
+	try:
+		url_video = urlresolver.resolve(url)
+		return [url_video, "-"]
+	except:
+		return ["-", "-"]	
+
+def obtem_streamin(url):
+	try:
+		url_video = urlresolver.resolve(url)
+		return [url_video, "-"]
+	except:
+		return ["-", "-"]			
+
 
 def play(url):
 	h1 = Player()
@@ -386,6 +400,8 @@ class Player(object):
 		neodrive = r'data-src="(.*?neodrive.*?/embed.*?)"'
 		videopw = r'data-src="(.*?videopw.com/e.*?)"'
 		vidig = r'data-src="(.*?vidigvideo.com/embed-.*?)"'
+		openload = r'src="(.*?openload.co/embed/.*?)"'
+		streaminto = r'src="(.*?streamin.to/.*?)"'
 
 		# print "codigo fonte: " + codigo_fonte
 		try:
@@ -418,6 +434,18 @@ class Player(object):
 		except:
 			pass
 
+		try:
+			links.append(re.findall(openload, codigo_fonte)[0])
+			hosts.append('Openload')
+		except:
+			pass
+
+		try:
+			links.append(re.findall(streaminto, codigo_fonte)[0])
+			hosts.append('Streamin')
+		except:
+			pass		
+
 		if not hosts:
 			return
 
@@ -439,6 +467,10 @@ class Player(object):
 			matriz = obtem_url_vidig(url_video)
 		elif 'videopw' in url_video:
 			matriz = obtem_url_videopw(url_video)
+		elif 'openload.co/embed' in url_video:
+			matriz = obtem_openload(url_video)
+		elif 'streamin.to/' in url_video:
+			matriz = obtem_streamin(url_video)		
 		else:
 			print "Falha: " + str(url_video)
 		print matriz
